@@ -262,6 +262,7 @@ func (w *Watcher) Run() error {
 
 		// On start, after reading the existing WAL for series records, we have a pointer to what is the latest segment.
 		// On subsequent calls to this function, currentSegment will have been incremented and we should open that segment.
+		level.Debug(w.logger).Log("msg","Replay wal segment ",currentSegment,";","Is tail? ",currentSegment>=lastSegment);
 		if err := w.watch(currentSegment, currentSegment >= lastSegment); err != nil {
 			return err
 		}
@@ -504,15 +505,20 @@ func (w *Watcher) readSegment(r *LiveReader, segmentNum int, tail bool) error {
 			// If we're not tailing a segment we can ignore any samples records we see.
 			// This speeds up replay of the WAL by > 10x.
 			if !tail {
+				level.Debug(w.logger).Log("msg","Not tail, skip ",segmentNum)
 				break
 			}
+			//把wal的二进制转成RefSample
 			samples, err := dec.Samples(rec, samples[:0])
 			if err != nil {
 				w.recordDecodeFailsMetric.Inc()
 				return err
 			}
+			//针对最后一个wal日志段
 			for _, s := range samples {
+				//如果有比服务启动时间大的采样
 				if s.T > w.startTimestamp {
+					//则需要replay并发送
 					if !w.sendSamples {
 						w.sendSamples = true
 						duration := time.Since(w.startTime)

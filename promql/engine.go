@@ -1061,6 +1061,7 @@ func (enh *EvalNodeHelper) DropMetricName(l labels.Labels) labels.Labels {
 // function call results.
 // The prepSeries function (if provided) can be used to prepare the helper
 // for each series, then passed to each call funcCall.
+// eval node helper要把计算这个节点子节点的值先保存下来
 func (ev *evaluator) rangeEval(prepSeries func(labels.Labels, *EvalSeriesHelper), funcCall func([]parser.Value, [][]EvalSeriesHelper, *EvalNodeHelper) (Vector, storage.Warnings), exprs ...parser.Expr) (Matrix, storage.Warnings) {
 	numSteps := int((ev.endTimestamp-ev.startTimestamp)/ev.interval) + 1
 	matrixes := make([]Matrix, len(exprs))
@@ -1074,6 +1075,7 @@ func (ev *evaluator) rangeEval(prepSeries func(labels.Labels, *EvalSeriesHelper)
 			// ev.currentSamples will be updated to the correct value within the ev.eval call.
 			val, ws := ev.eval(e)
 			warnings = append(warnings, ws...)
+			//计算每个表达式的结果，并放入functionCall的参数中
 			matrixes[i] = val.(Matrix)
 
 			// Keep a copy of the original point slices so that they
@@ -1532,6 +1534,7 @@ func (ev *evaluator) eval(expr parser.Expr) (parser.Value, storage.Warnings) {
 	case *parser.BinaryExpr:
 		switch lt, rt := e.LHS.Type(), e.RHS.Type(); {
 		case lt == parser.ValueTypeScalar && rt == parser.ValueTypeScalar:
+			//算术运算
 			return ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {
 				val := scalarBinop(e.Op, v[0].(Vector)[0].Point.V, v[1].(Vector)[0].Point.V)
 				return append(enh.Out, Sample{Point: Point{V: val}}), nil
@@ -1543,6 +1546,7 @@ func (ev *evaluator) eval(expr parser.Expr) (parser.Value, storage.Warnings) {
 			initSignatures := func(series labels.Labels, h *EvalSeriesHelper) {
 				h.signature = sigf(series)
 			}
+			//逻辑运算
 			switch e.Op {
 			case parser.LAND:
 				return ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {
@@ -1580,7 +1584,7 @@ func (ev *evaluator) eval(expr parser.Expr) (parser.Value, storage.Warnings) {
 
 	case *parser.StringLiteral:
 		return String{V: e.Val, T: ev.startTimestamp}, nil
-
+	//返回的是向量,这里需要从storage中查询
 	case *parser.VectorSelector:
 		ws, err := checkAndExpandSeriesSet(ev.ctx, e)
 		if err != nil {

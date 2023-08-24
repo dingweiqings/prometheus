@@ -755,6 +755,7 @@ func open(dir string, l log.Logger, r prometheus.Registerer, opts *Options, rngs
 		if opts.WALSegmentSize > 0 {
 			segmentSize = opts.WALSegmentSize
 		}
+		level.Info(l).Log("msg", "My log test ---------------- restart new segment")
 		wal, err = wlog.NewSize(l, r, walDir, segmentSize, opts.WALCompression)
 		if err != nil {
 			return nil, err

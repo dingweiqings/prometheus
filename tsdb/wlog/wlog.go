@@ -310,7 +310,7 @@ func NewSize(logger log.Logger, reg prometheus.Registerer, dir string, segmentSi
 	if err != nil {
 		return nil, err
 	}
-
+	level.Info(logger).Log("msg", "My log test ---------------- restart new segment",writeSegmentIndex)
 	if err := w.setSegment(segment); err != nil {
 		return nil, err
 	}

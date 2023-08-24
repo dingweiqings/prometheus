@@ -585,6 +585,7 @@ func (h *Head) Init(minValidTime int64) error {
 	}()
 
 	level.Info(h.logger).Log("msg", "Replaying on-disk memory mappable chunks if any")
+	level.Info(h.logger).Log("msg", "My log test ---------------- Replaying on-disk memory mappable chunks if any snapshot, endAt")
 	start := time.Now()
 
 	snapIdx, snapOffset := -1, 0
@@ -598,6 +599,7 @@ func (h *Head) Init(minValidTime int64) error {
 		loadSnapshot := true
 		if h.wal != nil {
 			_, endAt, err := wlog.Segments(h.wal.Dir())
+			level.Info(h.logger).Log("msg", "Replaying on-disk memory mappable chunks if any snapshot, endAt",endAt)
 			if err != nil {
 				return errors.Wrap(err, "finding WAL segments")
 			}
@@ -634,7 +636,8 @@ func (h *Head) Init(minValidTime int64) error {
 			}
 		}
 	}
-
+	first,last,_:=wlog.Segments(h.wal.Dir())
+	level.Info(h.logger).Log("msg", "My log test ---------------------segment create ---------, first,last",first," ",last)
 	mmapChunkReplayStart := time.Now()
 	mmappedChunks, oooMmappedChunks, lastMmapRef, err := h.loadMmappedChunks(refSeries)
 	if err != nil {

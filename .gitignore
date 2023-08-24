@@ -3,7 +3,8 @@
 /*.yaml
 /*.yml
 *.exe
-
+.vscode
+.idea
 /prometheus
 /promtool
 benchmark.txt

@@ -588,6 +588,7 @@ func (w *SegmentWAL) cut() error {
 	}
 
 	p, _, err := nextSequenceFile(w.dirFile.Name())
+	level.Debug(w.logger).Log("msg","OhOhoh, we need create a segment file,",p)
 	if err != nil {
 		return err
 	}
@@ -741,7 +742,9 @@ func (w *SegmentWAL) write(t WALEntryType, flag uint8, buf []byte) error {
 	)
 	// XXX(fabxc): this currently cuts a new file whenever the WAL was newly opened.
 	// Probably fine in general but may yield a lot of short files in some cases.
+	level.Debug(w.logger).Log("msg","Write wal log")
 	if w.cur == nil || w.curN > w.segmentSize || newsz > w.segmentSize && sz <= w.segmentSize {
+		level.Debug(w.logger).Log("msg","OhOhoh, we need create a segment file,","curN ",w.curN,"w.segmentSize",w.segmentSize,"newsz",newsz)
 		if err := w.cut(); err != nil {
 			return err
 		}
